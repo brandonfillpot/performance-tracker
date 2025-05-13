@@ -3,8 +3,9 @@ import express from "express";
 import cors from "cors";
 import { db } from "./db/client";
 // validations
-import { Employees, Reviews } from "./db/schema";
+import { Users, Employees, Reviews } from "./db/schema";
 import { validateData } from "./validations/validate";
+import { eq } from "drizzle-orm";
 
 const app = express();
 const PORT = 3456;
@@ -15,6 +16,19 @@ app.use(express.json());
 // Root route
 app.get("/", (req, res) => {
   res.send("API is running 🎉");
+});
+
+app.post("/auth/login", async (req, res) => {
+  const { email, password } = req.body;
+
+  const user = await db.query.Users.findFirst({
+    where: eq(Users.email, email),
+  });
+  if (!user || user.password !== password) {
+    res.status(401).json({ error: "Invalid credentials" });
+  }
+
+  res.json({ id: user?.id, name: user?.name, email: user?.email });
 });
 
 app.get("/employees", async (req, res) => {

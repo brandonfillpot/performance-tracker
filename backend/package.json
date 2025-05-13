@@ -5,7 +5,6 @@
   "main": "index.js",
   "scripts": {
     "generate": "drizzle-kit generate",
-    "migrate": "tsx src/db/migrate.ts",
     "seed": "ts-node src/db/seed.ts",
     "dev": "ts-node src/index.ts"
   },

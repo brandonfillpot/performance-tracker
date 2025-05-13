@@ -25,8 +25,24 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+        className={`${geistSans.variable} ${geistMono.variable} antialiased bg-white`}
       >
+        <nav className="flex justify-between items-center px-8 py-4 bg-white border-b border-gray-200 shadow-sm rounded-md">
+          <a
+            className="text-xl font-bold text-green-600 hover:text-green-700"
+            href="/"
+          >
+            Performance Tracker
+          </a>
+          <div className="flex gap-6">
+            <a
+              className="text-gray-700 hover:text-green-700 font-medium"
+              href="/employees"
+            >
+              Employees
+            </a>
+          </div>
+        </nav>
         {children}
       </body>
     </html>
