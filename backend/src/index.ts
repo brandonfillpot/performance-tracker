@@ -2,33 +2,61 @@
 import express from "express";
 import cors from "cors";
 import { db } from "./db/client";
+import cookieParser from "cookie-parser";
 // validations
-import { Users, Employees, Reviews } from "./db/schema";
+import { Employees, Reviews } from "./db/schema";
 import { validateData } from "./validations/validate";
-import { eq } from "drizzle-orm";
+// classes
+import { AuthError } from "./errors/AuthError";
+// services
+import { findUser } from "./services/user";
+import { createToken } from "./services/auth";
 
 const app = express();
 const PORT = 3456;
 
 app.use(cors());
 app.use(express.json());
+app.use(cookieParser());
 
 // Root route
 app.get("/", (req, res) => {
   res.send("API is running 🎉");
 });
 
-app.post("/auth/login", async (req, res) => {
-  const { email, password } = req.body;
+app.post("/auth/login", async (req, res): Promise<any> => {
+  try {
+    const { email, password } = req.body;
 
-  const user = await db.query.Users.findFirst({
-    where: eq(Users.email, email),
-  });
-  if (!user || user.password !== password) {
-    res.status(401).json({ error: "Invalid credentials" });
+    const user = await findUser(email);
+
+    if (!user || user.password !== password) {
+      throw new AuthError();
+    }
+
+    const token = createToken({ id: user.id, email: user.email });
+
+    res
+      .cookie("token", token, {
+        httpOnly: true,
+        maxAge: 60 * 60 * 1000,
+        secure: process.env.NODE_ENV === "production",
+        sameSite: "lax",
+      })
+      .status(200)
+      .json({
+        user: {
+          id: user?.id,
+          name: user?.name,
+          email: user?.email,
+        },
+      });
+  } catch (error: any) {
+    if (error.name === "AuthError") {
+      return res.status(401).send(error.message);
+    }
+    return res.status(500).send("Internal server error");
   }
-
-  res.json({ id: user?.id, name: user?.name, email: user?.email });
 });
 
 app.get("/employees", async (req, res) => {

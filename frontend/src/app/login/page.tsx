@@ -1,6 +1,5 @@
 "use client";
 
-import { signIn } from "next-auth/react";
 import { useForm } from "react-hook-form";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
@@ -20,16 +19,28 @@ const LoginForm = () => {
   const router = useRouter();
 
   const onSubmit = async (data: LoginInputs) => {
-    const result = await signIn("credentials", {
-      email: data.email,
-      password: data.password,
-      redirect: false,
-    });
+    try {
+      const result = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL}/auth/login`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(data),
+        }
+      );
 
-    if (result?.error) {
-      setError("Invalid Credentials");
-    } else {
-      router.push("/employees");
+      if (!result?.ok) {
+        const errorData = await result.json();
+        setError(errorData || "Invalid Credentials");
+        return;
+      } else {
+        router.push("/employees");
+      }
+    } catch (error) {
+      console.error("Login failed", error);
+      setError("Failed to connect to the server");
     }
   };
 
